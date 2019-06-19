@@ -13,7 +13,7 @@ open class NFXProtocol: URLProtocol
     private static let nfxInternalKey = "com.netfox.NFXInternal"
     
     private lazy var session: URLSession = { [unowned self] in
-        return URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        return URLSession(configuration: .background(withIdentifier: "NFX"), delegate: self, delegateQueue: nil)
     }()
     
     private let model = NFXHTTPModel()
@@ -131,6 +131,11 @@ extension NFXProtocol: URLSessionDataDelegate {
         
         client?.urlProtocol(self, wasRedirectedTo: updatedRequest, redirectResponse: response)
         completionHandler(updatedRequest)
+    }
+    
+    public func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        let wrappedChallenge = URLAuthenticationChallenge(authenticationChallenge: challenge, sender: NFXAuthenticationChallengeSender(handler: completionHandler))
+        client?.urlProtocol(self, didReceive: wrappedChallenge)
     }
     
     #if !os(OSX)
